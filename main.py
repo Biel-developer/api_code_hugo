@@ -40,7 +40,7 @@ class JogoResponse(BaseModel):
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
     # Libera apenas o endpoint de login e a documentação
-    open_paths = {"/login"}
+    open_paths = {"/login", "/"}
     if request.url.path in open_paths:
         return await call_next(request)
 
@@ -54,6 +54,10 @@ async def auth_middleware(request: Request, call_next):
 @app.on_event("startup")
 def startup():
     init_db()
+
+@app.get("/")
+def home():
+    return {"status": "API ONLINE"}
 
 @app.post("/login", status_code=200)
 def login(body: LoginRequest):
