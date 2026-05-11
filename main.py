@@ -39,15 +39,38 @@ class JogoResponse(BaseModel):
 
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
-    # Libera apenas o endpoint de login e a documentação
+    # Libera login e rota principal
     open_paths = {"/login", "/"}
+
     if request.url.path in open_paths:
         return await call_next(request)
 
-    token = request.headers.get("Authorization")
-    if not token or token != FIXED_TOKEN:
+    auth_header = request.headers.get("Authorization")
+
+    if not auth_header:
         from fastapi.responses import JSONResponse
-        return JSONResponse(status_code=401, content={"detail": "Não autorizado. Faça login primeiro."})
+        return JSONResponse(
+            status_code=401,
+            content={"detail": "Não autorizado. Faça login primeiro."}
+        )
+
+    parts = auth_header.split(" ")
+
+    if len(parts) != 2 or parts[0] != "Bearer":
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=401,
+            content={"detail": "Token inválido."}
+        )
+
+    token = parts[1]
+
+    if token != FIXED_TOKEN:
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=401,
+            content={"detail": "Token inválido."}
+        )
 
     return await call_next(request)
 
